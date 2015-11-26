@@ -13,7 +13,7 @@ typedef struct {
     FILE * out;
     int go;
     int extraCols;
-    long *colCounts
+    long *colCounts;
 } ParserData;
 
 int Trim = 0;
@@ -39,8 +39,10 @@ writeValues(ParserData *data)
     int i;
     for(i = 0; i < data->numColNames; i++) {
       if(data->values[i]) {
+	if(Trim)
 	  trim(data->values[i]);
-	  fprintf(data->out, "%s", data->values[i]);	
+	fprintf(data->out, "%s", data->values[i]);	
+	data->values[i] = NULL;
       }
 	fprintf(data->out, "%s", (i < data->numColNames - 1) ? "," : "\n");
     }
@@ -53,6 +55,7 @@ startDoc(void *ctx)
 {
     ParserData *data = (ParserData*) ctx;
     int i;
+    // could write the header line in the routine that fopen()s the file
     for(i = 0; i < data->numColNames; i++)
 	fprintf(data->out, "%s%s", data->colNames[i], (i < data->numColNames - 1) ? "," : "\n");
 }
@@ -61,7 +64,8 @@ void
 endDoc(void *ctx)
 {
     ParserData *data = (ParserData*) ctx;
-    fclose(data->out);
+    fclose(data->out); // could do this in the same routine that we fopen() the file
+                       // for symmetry
 }
 
 void 
@@ -69,10 +73,17 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
 {
     ParserData *data = (ParserData*) ctx;
     if(data->go == 0) {
+      // the first element we see is the root and so we acknowledge we
+      // have seen that and then all subsequent starts of elements
+      // are the rows we want.
 	data->go = 1;
 	return;
     }
 
+    // loop over the attributes (as pairs of name - values)
+    // and put the values into the data->values slots in the order
+    // of the columns of the CSV file, i.e. colNames.
+    // Give a warning if we find an attribute not in colNames.
     const xmlChar **ptr = atts;
     int i, bad = 0;
     while(ptr && ptr[0]) {
@@ -91,6 +102,7 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
 	}
 	ptr += 2;
     }
+    // now put the values for this row into the CSV file
     writeValues(data);
 }
 
@@ -99,14 +111,13 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
 void 
 endElement(void *ctx, const xmlChar *name)
 {
-    // output the values
-    ParserData *data = (ParserData*) ctx;
-    //    writeValues(data);
+  // Nothing to do here. All done in startElement().
 }
 
 void chars(void *ctx, const xmlChar *ch, int len)
 {
-  //    fprintf(stderr, "chars\n");
+  // This is called for the text between the <row> elements
+  // and we don't care about that. It is just whitespace.
 }
 
 
@@ -149,6 +160,7 @@ xmlSAXHandler methods  = {
 };
 
 
+// Used at the end to show the number of each of the attributes.
 void
 showColCounts(ParserData *data)
 {
@@ -176,7 +188,15 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     data.numColNames = numColNames;
     data.extraCols = 0;
     data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
+    if(!data.values) {
+      fprintf(stderr, "cannot allocate memory for column values");
+      exit(1);
+    }
     data.colCounts = (long*) calloc(numColNames, sizeof(long));
+    if(!data.colCounts) {
+      fprintf(stderr, "cannot allocate memory for column counts");
+      exit(2);
+    }
 
     ctx = xmlCreateFileParserCtxt(infileName);
     ctx->userData = &data;
