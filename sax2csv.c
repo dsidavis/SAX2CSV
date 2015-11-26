@@ -13,17 +13,36 @@ typedef struct {
     FILE * out;
     int go;
     int extraCols;
-
+    long *colCounts
 } ParserData;
+
+int Trim = 0;
+
+int
+trim(xmlChar *str)
+{
+  int changed = 0, i;
+  xmlChar *p = str;
+
+  for(p = str ; p[0]; p++) {
+    if(p[0] == '\r' || p[0] == '\n') {
+       p[0] = ' ';
+       changed++;
+    }
+  }
+  return(changed);
+}
 
 int
 writeValues(ParserData *data)
 {
     int i;
     for(i = 0; i < data->numColNames; i++) {
-	if(data->values[i]) 
-	    fprintf(data->out, "%s", data->values[i]);	
-	    fprintf(data->out, "%s", (i < data->numColNames - 1) ? "," : "\n");
+      if(data->values[i]) {
+	  trim(data->values[i]);
+	  fprintf(data->out, "%s", data->values[i]);	
+      }
+	fprintf(data->out, "%s", (i < data->numColNames - 1) ? "," : "\n");
     }
     return(0);
 }
@@ -62,6 +81,7 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
 	    if(strcmp(ptr[0], data->colNames[i]) == 0) {
 		data->values[i] = ptr[1];
 		bad = 0;
+		data->colCounts[i]++;
 		break;
 	    }
 	}
@@ -129,6 +149,14 @@ xmlSAXHandler methods  = {
 };
 
 
+void
+showColCounts(ParserData *data)
+{
+  int i;
+  for(i = 0; i < data->numColNames; i++)
+    fprintf(stderr, "%s %ld\n", data->colNames[i], data->colCounts[i]);
+}
+
 
 int
 parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int numColNames) {
@@ -148,12 +176,15 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     data.numColNames = numColNames;
     data.extraCols = 0;
     data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
+    data.colCounts = (long*) calloc(numColNames, sizeof(long));
 
     ctx = xmlCreateFileParserCtxt(infileName);
     ctx->userData = &data;
     ctx->sax = &methods;
     
     xmlParseDocument(ctx);
+
+    showColCounts(&data);
 
     ctx->sax = NULL;
     xmlFreeParserCtxt(ctx);
@@ -164,6 +195,18 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
 int 
 main(int argc, char **argv)
 {
-    parse_xml_file(argv[1], argv[2], argv + 3, argc - 3) == 0;
+  int i;
+  int offset = 0;
+  for(i = 1; i < argc; i++) {
+    if(argv[i][0] == '-') {
+      offset ++;
+      if(strcmp(argv[i], "--trim") == 0) 
+	fprintf(stderr, "enabling trimming\n");
+	Trim = 1;
+    } else 
+      break;
+  }
+
+  return( parse_xml_file(argv[offset+1], argv[offset + 2], argv + (offset + 3), argc - (3 + offset) ));
     
 }

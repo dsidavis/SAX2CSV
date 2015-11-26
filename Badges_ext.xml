@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<badges>
+  <row Id="1" UserId="5" Name="Teacher" Date="2010-07-19T19:39:07.047" />
+  <row Id="2" UserId="6" Name="Teacher" Date="2010-07-19T19:39:07.220" />
+  <row Id="3" UserId="8" Name="Teacher" Date="2010-07-19T19:39:07.330" />
+  <row Id="4" UserId="23" Name="Teacher" Date="2010-07-19T19:39:07.437" />
+  <row Id="5" UserId="36" Name="Teacher" Date="2010-07-19T19:39:07.593" />
+  <row Id="6" UserId="37" Name="Teacher" Date="2010-07-19T19:39:07.687" />
+  <row Id="7" UserId="50" Name="Teacher" Date="2010-07-19T19:39:07.720" />
+  <row Id="8" UserId="55" Name="Teacher" Date="2010-07-19T19:39:07.780" />
+  <row Id="9" UserId="5" Name="Student" Date="2010-07-19T19:39:07.890" />
+  <row Id="10" UserId="8" Name="Student" Date="2010-07-19T19:39:07.937" />
+  <row Id="11" UserId="13" Name="Student" Date="2010-07-19T19:39:08.000" />
+  <row Id="12" UserId="18" Name="Student" Date="2010-07-19T19:39:08.030" />
+  <row Id="13" UserId="23" Name="Student" Date="2010-07-19T19:39:08.093" />
+  <row Id="14" UserId="24" Name="Student" Date="2010-07-19T19:39:08.187" />
+  <row Id="16" UserId="59" Name="Student" Date="2010-07-19T19:39:08.390" />
+  <row Id="17" UserId="66" Name="Student" Date="2010-07-19T19:39:08.547" />
+  <row Id="18" UserId="69" Name="Student" Date="2010-07-19T19:39:08.623" other="abc"/>
+  <row Id="19" UserId="75" Name="Student" Date="2010-07-19T19:39:08.670" />
+  <row Id="20" UserId="13" Name="Editor" Date="2010-07-19T19:39:08.797" />
+  <row Id="21" UserId="23" Name="Editor" Date="2010-07-19T19:39:08.857" />
+  <row Id="22" UserId="6" Name="Organizer" Date="2010-07-19T19:39:08.920" />
+  <row Id="23" UserId="60" Name="Organizer" Date="2010-07-19T19:39:08.937" />
+  <row Id="24" UserId="80" Name="Organizer" Date="2010-07-19T19:39:08.997" />
+  <row Id="25" UserId="6" Name="Supporter" Date="2010-07-19T19:39:09.090" />
+  <row Id="26" UserId="22" Name="Supporter" Date="2010-07-19T19:39:09.090" />
+  <row Id="27" UserId="23" Name="Supporter" Date="2010-07-19T19:39:09.107" />
+  <row Id="28" UserId="24" Name="Supporter" Date="2010-07-19T19:39:09.107" />
+  <row Id="29" UserId="41" Name="Supporter" Date="2010-07-19T19:39:09.107" />
+</badges>
