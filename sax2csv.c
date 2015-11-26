@@ -19,7 +19,8 @@ typedef struct {
 int
 writeValues(ParserData *data)
 {
-    for(int i = 0; i < data->numColNames; i++) {
+    int i;
+    for(i = 0; i < data->numColNames; i++) {
 	if(data->values[i]) 
 	    fprintf(data->out, "%s", data->values[i]);	
 	    fprintf(data->out, "%s", (i < data->numColNames - 1) ? "," : "\n");
@@ -32,7 +33,8 @@ void
 startDoc(void *ctx)    
 {
     ParserData *data = (ParserData*) ctx;
-    for(int i = 0; i < data->numColNames; i++)
+    int i;
+    for(i = 0; i < data->numColNames; i++)
 	fprintf(data->out, "%s%s", data->colNames[i], (i < data->numColNames - 1) ? "," : "\n");
 }
 
@@ -55,11 +57,12 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
     const xmlChar **ptr = atts;
     int i, bad = 0;
     while(ptr && ptr[0]) {
+        bad = 1;
 	for(i = 0; i < data->numColNames; i++) {
-	    bad = 1;
 	    if(strcmp(ptr[0], data->colNames[i]) == 0) {
 		data->values[i] = ptr[1];
 		bad = 0;
+		break;
 	    }
 	}
 	if(bad) {
@@ -78,12 +81,12 @@ endElement(void *ctx, const xmlChar *name)
 {
     // output the values
     ParserData *data = (ParserData*) ctx;
-    writeValues(data);
+    //    writeValues(data);
 }
 
 void chars(void *ctx, const xmlChar *ch, int len)
 {
-    fprintf(stderr, "chars\n");
+  //    fprintf(stderr, "chars\n");
 }
 
 
@@ -144,6 +147,7 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     data.colNames = colNames;
     data.numColNames = numColNames;
     data.extraCols = 0;
+    data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
 
     ctx = xmlCreateFileParserCtxt(infileName);
     ctx->userData = &data;
@@ -151,6 +155,7 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     
     xmlParseDocument(ctx);
 
+    ctx->sax = NULL;
     xmlFreeParserCtxt(ctx);
 
     return(data.extraCols);
