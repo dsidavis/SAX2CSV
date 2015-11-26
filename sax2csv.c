@@ -13,10 +13,33 @@ typedef struct {
     FILE * out;
     int go;
     int extraCols;
+    xmlChar **newColNames;
+    int numNewCols;
     long *colCounts;
 } ParserData;
 
 int Trim = 0;
+
+void 
+addExtraCol(ParserData *d, const xmlChar *name)
+{
+  int i;
+  for(i = 0; i < d->numNewCols; i++) {
+    if(xmlStrcmp(name, d->newColNames[i]) == 0) {
+      return;
+    }
+  }
+
+  // So didn't find it.
+  d->numNewCols ++;
+  d->newColNames = (xmlChar **) realloc(d->newColNames, d->numNewCols * sizeof(xmlChar *));
+  if(!d->newColNames) {
+    fprintf(stderr, "cannot allocate space for extra column names\n");
+    exit(3);
+  }
+  d->newColNames[d->numNewCols - 1] = xmlStrdup(name);
+  d->extraCols = 1;
+}
 
 int
 trim(xmlChar *str)
@@ -33,6 +56,17 @@ trim(xmlChar *str)
   return(changed);
 }
 
+void
+showNewCols(ParserData *data)
+{
+  int i;
+  if(data->numNewCols) {
+    fprintf(stderr, "Additional attributes found\n");
+    for(i = 0; i < data->numNewCols; i++)
+      fprintf(stderr, "%s\n", data->newColNames[i]);
+  }
+
+}
 int
 writeValues(ParserData *data)
 {
@@ -102,10 +136,9 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
 		break;
 	    }
 	}
-	if(bad) {
-	    fprintf(stderr, "new column name %s\n", ptr[0]);
-	    data->extraCols = 1;
-	}
+	if(bad) 
+	  addExtraCol(data, ptr[0]);
+	
 	ptr += 2;
     }
     // now put the values for this row into the CSV file
@@ -200,6 +233,9 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     data.colNames = colNames;
     data.numColNames = numColNames;
     data.extraCols = 0;
+    data.numNewCols = 0;
+    data.newColNames = NULL;
+
     data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
     if(!data.values) {
       fprintf(stderr, "cannot allocate memory for column values");
@@ -218,6 +254,9 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     xmlParseDocument(ctx);
 
     showColCounts(&data);
+    if(data.numNewCols) 
+       showNewCols(&data);
+
 
     ctx->sax = NULL;
     xmlFreeParserCtxt(ctx);
