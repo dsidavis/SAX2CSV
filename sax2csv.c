@@ -36,6 +36,8 @@ trim(xmlChar *str)
 int
 writeValues(ParserData *data)
 {
+    if(!data->out)
+      return;
     int i;
     for(i = 0; i < data->numColNames; i++) {
       if(data->values[i]) {
@@ -54,6 +56,9 @@ void
 startDoc(void *ctx)    
 {
     ParserData *data = (ParserData*) ctx;
+    if(!data->out)
+      return;
+
     int i;
     // could write the header line in the routine that fopen()s the file
     for(i = 0; i < data->numColNames; i++)
@@ -64,8 +69,9 @@ void
 endDoc(void *ctx)
 {
     ParserData *data = (ParserData*) ctx;
-    fclose(data->out); // could do this in the same routine that we fopen() the file
-                       // for symmetry
+    if(data->out && data->out != stdout)
+      fclose(data->out); // could do this in the same routine that we fopen() the file
+                         // for symmetry
 }
 
 void 
@@ -171,17 +177,24 @@ showColCounts(ParserData *data)
 
 
 int
-parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int numColNames) {
-
+parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int numColNames) 
+{
     xmlParserCtxtPtr ctx; 
     FILE *out;
     ParserData data;
 
-    if( ! ( out = fopen(outfileName, "w"))) {
+    if(outfileName == NULL)
+      data.out = NULL;
+    else if(!outfileName[0] || strcmp(outfileName, "-") == 0)
+      data.out = stdout;
+    else {
+      if( ! ( out = fopen(outfileName, "w"))) {
 	fprintf(stderr, "cannot open %s\n", outfileName);
 	exit(1);
+      }
+      data.out = out;
     }
-    data.out = out;
+
     data.ctr = 0;
     data.go = 0;
     data.colNames = colNames;
@@ -217,16 +230,20 @@ main(int argc, char **argv)
 {
   int i;
   int offset = 0;
+  int noout = 0;
   for(i = 1; i < argc; i++) {
     if(argv[i][0] == '-') {
       offset ++;
-      if(strcmp(argv[i], "--trim") == 0) 
+      if(strcmp(argv[i], "--trim") == 0) {
 	fprintf(stderr, "enabling trimming\n");
 	Trim = 1;
+      } else if(strcmp(argv[i], "--noout") == 0) {
+	noout = 1;
+      }
     } else 
       break;
   }
 
-  return( parse_xml_file(argv[offset+1], argv[offset + 2], argv + (offset + 3), argc - (3 + offset) ));
+  return( parse_xml_file(argv[offset+1], noout ? NULL : argv[offset + 2], argv + (offset + 3 - noout), argc - (3 + offset - noout) ));
     
 }
