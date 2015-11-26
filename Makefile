@@ -6,7 +6,10 @@ sax2csv: sax2csv.o
 	$(CC) -o $@ $^ $(LIBS)
 
 
-run: sax2csv
+Badges.csv: sax2csv
 	./sax2csv Badges.xml Badges.csv  Id UserId Name Date
+
+PostHistory.csv: PostHistory.xml sax2csv
+	./sax2csv PostHistory.xml PostHistory.csv Id PostHistoryTypeId PostId RevisionGUID  CreationDate UserId Text UserDisplayName Comment
 
 #%.o: %.c
