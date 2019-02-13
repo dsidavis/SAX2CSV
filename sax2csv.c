@@ -20,6 +20,8 @@ typedef struct {
 
 int Trim = 0;
 
+int showHelp();
+
 void 
 addExtraCol(ParserData *d, const xmlChar *name)
 {
@@ -270,19 +272,40 @@ main(int argc, char **argv)
   int i;
   int offset = 0;
   int noout = 0;
+
+  if(argc == 1) {
+      showHelp();
+      exit(1);
+  }
+  
   for(i = 1; i < argc; i++) {
     if(argv[i][0] == '-') {
-      offset ++;
-      if(strcmp(argv[i], "--trim") == 0) {
-	fprintf(stderr, "enabling trimming\n");
-	Trim = 1;
-      } else if(strcmp(argv[i], "--noout") == 0) {
-	noout = 1;
-      }
+       offset ++;
+       if(strcmp(argv[i], "--help") == 0) {
+	   showHelp();
+	   exit(1);
+       } else if(strcmp(argv[i], "--trim") == 0) {
+   	  fprintf(stderr, "enabling trimming\n");
+	  Trim = 1;
+       } else if(strcmp(argv[i], "--noout") == 0) {
+	  noout = 1;
+       }
     } else 
       break;
   }
 
   return( parse_xml_file(argv[offset+1], noout ? NULL : argv[offset + 2], argv + (offset + 3 - noout), argc - (3 + offset - noout) ));
     
+}
+
+int
+showHelp()
+{
+    fprintf(stderr, "sax2csv [--trim] [--noout]  inputFile  outputFile  colName colName colName ...\n");
+    fprintf(stderr, "\n--trim  remove white space before and after (attribute) values");
+    fprintf(stderr, "\n--noout  no output is written to a file or stdout, just a pass of the data to identify attribute names");    ;
+    fprintf(stderr, "\ninputFile  path to the XML file to be processed");
+    fprintf(stderr, "\noutputFile  path for writing the content as CSV. Can be '' for stdout");
+    fprintf(stderr, "\ncolName  the name(s) of the attributes to extract from each record and write to the CSV");
+    fprintf(stderr, "\n");
 }
