@@ -71,7 +71,7 @@ int
 writeValues(ParserData *data)
 {
     if(!data->out)
-      return;
+	return(-1);
     int i;
     for(i = 0; i < data->numColNames; i++) {
       if(data->values[i]) {
