@@ -24,3 +24,21 @@ So with --noout being used, the command line is
 ```
    sax2csv [--trim] --noout  inputFile  colName colName colName ...
 ```       
+
+
+
+
+We can output all of the attributes found across the XML elements by just providing the name of the
+input file, e.g.,
+```
+sax2csv Badges.xml
+```
+We can then use these to specify the names of the columns in a second pass
+```
+sax2csv Badges.xml output `sax2csv Badges.xml`
+```
+or write the column names to a file and then cat these on the commmand line (in bash)
+```
+sax2csv Badges.xml  2> COL_NAMES 
+sax2csv Badges.xml output `cat COL_NAMES`
+```

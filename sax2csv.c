@@ -59,13 +59,14 @@ trim(xmlChar *str)
 }
 
 void
-showNewCols(ParserData *data)
+showNewCols(ParserData *data, int showBanner)
 {
   int i;
   if(data->numNewCols) {
-    fprintf(stderr, "Additional attributes found\n");
-    for(i = 0; i < data->numNewCols; i++)
-      fprintf(stderr, "%s\n", data->newColNames[i]);
+      if(showBanner)
+	  fprintf(stderr, "Additional attributes found\n");
+      for(i = 0; i < data->numNewCols; i++)
+	  fprintf(stderr, "%s\n", data->newColNames[i]);
   }
 
 }
@@ -238,6 +239,7 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     data.numNewCols = 0;
     data.newColNames = NULL;
 
+    if(numColNames > 0) {
     data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
     if(!data.values) {
       fprintf(stderr, "cannot allocate memory for column values");
@@ -248,6 +250,7 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
       fprintf(stderr, "cannot allocate memory for column counts");
       exit(2);
     }
+    }
 
     ctx = xmlCreateFileParserCtxt(infileName);
     ctx->userData = &data;
@@ -257,8 +260,8 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
 
     showColCounts(&data);
     if(data.numNewCols) 
-       showNewCols(&data);
-
+	showNewCols(&data, numColNames > 0);
+    
 
     ctx->sax = NULL;
     xmlFreeParserCtxt(ctx);
