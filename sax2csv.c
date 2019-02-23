@@ -20,6 +20,8 @@ typedef struct {
     long maxEntries;
     char *separator;
     int Trim;
+
+    int repIdTags;
 } ParserData;
 
 //int Trim = 0;
@@ -110,6 +112,27 @@ writeValues(ParserData *data)
     if(!data->out)
 	return(-1);
     int i;
+
+    if(data->repIdTags) {
+	
+	char *ptr = data->values[1];
+	if(!ptr || !ptr[0])
+	    return(0);
+
+	int n = 0;
+	while(ptr && ptr[0]) {
+	    if(ptr[0] == '<') 
+   	        fprintf(data->out, "%s%s%s", n++ > 0 ? "\n" : "", data->values[0], data->separator);
+	    else if(ptr[0] != '>')
+		fputc(ptr[0], data->out);
+
+	    ptr++;
+	}
+	fputc('\n', data->out);
+	return(0);
+    }
+
+
     for(i = 0; i < data->numColNames; i++) {
       if(data->values[i]) {
 	if(data->Trim)
@@ -164,6 +187,10 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
     // Give a warning if we find an attribute not in colNames.
     const xmlChar **ptr = atts;
     int i, bad = 0;
+    for(i = 0; i < data->numColNames; i++) {
+	data->values[i] = NULL;
+    }
+
     while(ptr && ptr[0]) {
         bad = 1;
 	for(i = 0; i < data->numColNames; i++) {
@@ -321,6 +348,8 @@ main(int argc, char **argv)
   ParserData parserData;
   parserData.separator = strdup("\t");
   parserData.Trim = 0;
+  parserData.repIdTags = 0;
+  parserData.maxEntries = -1;
 
   if(argc == 1) {
       showHelp();
@@ -338,6 +367,8 @@ main(int argc, char **argv)
 	  parserData.Trim = 1;
        } else if(strcmp(argv[i], "--noout") == 0) {
 	  noout = 1;
+       } else if(strcmp(argv[i], "--tags") == 0) {
+	  parserData.repIdTags = 1;
        } else if(strcmp(argv[i], "--num") == 0 && argc > i+1) {
 	   parserData.maxEntries = atol(argv[i+1]);
 	   i++;
