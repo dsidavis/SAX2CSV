@@ -16,9 +16,15 @@ typedef struct {
     xmlChar **newColNames;
     int numNewCols;
     long *colCounts;
+    long numEntries;
+    long maxEntries;
+    char *separator;
+    int Trim;
 } ParserData;
 
-int Trim = 0;
+//int Trim = 0;
+// long numRecords = -1;
+// char *separator = "\t";
 
 int showHelp();
 
@@ -66,10 +72,38 @@ showNewCols(ParserData *data, int showBanner)
       if(showBanner)
 	  fprintf(stderr, "Additional attributes found\n");
       for(i = 0; i < data->numNewCols; i++)
-	  fprintf(stderr, "%s\n", data->newColNames[i]);
+	  fprintf(showBanner ? stderr : stdout, "%s%s", data->newColNames[i], showBanner ? "\n" : "\n");
   }
 
 }
+
+void
+writeChars(FILE *out, char *str)
+{
+    char *p = str;
+    fputc('"', out);
+    while(*p) {
+	if(*p == '\r' && p[1] && p[1] == '\n')
+	    p++;
+	switch( *p) {
+	case '\n':
+	    fprintf(out, "\\\\n");
+	    break;
+	case '\t':
+	    fprintf(out, "    ");//XXX tab to 4 spaces! so can use tab separator.
+	    break;
+	case '"':
+	    fprintf(out, "\"");
+	    break;
+	default: 
+	    fputc(*p, out);
+	    break;
+	}
+	    p++;
+    }
+    fputc('"', out);
+}
+
 int
 writeValues(ParserData *data)
 {
@@ -78,12 +112,13 @@ writeValues(ParserData *data)
     int i;
     for(i = 0; i < data->numColNames; i++) {
       if(data->values[i]) {
-	if(Trim)
+	if(data->Trim)
 	  trim(data->values[i]);
-	fprintf(data->out, "%s", data->values[i]);	
+        writeChars(data->out, data->values[i]);
+	// fprintf(data->out, "%s", data->values[i]);	
 	data->values[i] = NULL;
       }
-	fprintf(data->out, "%s", (i < data->numColNames - 1) ? "," : "\n");
+	fprintf(data->out, "%s", (i < data->numColNames - 1) ? data->separator : "\n");
     }
     return(0);
 }
@@ -99,7 +134,7 @@ startDoc(void *ctx)
     int i;
     // could write the header line in the routine that fopen()s the file
     for(i = 0; i < data->numColNames; i++)
-	fprintf(data->out, "%s%s", data->colNames[i], (i < data->numColNames - 1) ? "," : "\n");
+	fprintf(data->out, "%s%s", data->colNames[i], (i < data->numColNames - 1) ? data->separator : "\n");
 }
 
 void 
@@ -146,6 +181,13 @@ startElement(void *ctx, const xmlChar *name, const xmlChar **atts)
     }
     // now put the values for this row into the CSV file
     writeValues(data);
+
+    data->numEntries++;
+    if(data->maxEntries > -1 &&  data->numEntries >= data->maxEntries) {
+	fflush(data->out);
+	fclose(data->out);
+	exit(0); // stop more elegantly
+    }
 }
 
 
@@ -213,11 +255,10 @@ showColCounts(ParserData *data)
 
 
 int
-parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int numColNames) 
+parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int numColNames, ParserData data) 
 {
     xmlParserCtxtPtr ctx; 
     FILE *out;
-    ParserData data;
 
     if(outfileName == NULL)
       data.out = NULL;
@@ -238,18 +279,20 @@ parse_xml_file(const char *infileName, char *outfileName,  char **colNames, int 
     data.extraCols = 0;
     data.numNewCols = 0;
     data.newColNames = NULL;
+    data.numEntries = 0;
+
 
     if(numColNames > 0) {
-    data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
-    if(!data.values) {
-      fprintf(stderr, "cannot allocate memory for column values");
-      exit(1);
-    }
-    data.colCounts = (long*) calloc(numColNames, sizeof(long));
-    if(!data.colCounts) {
-      fprintf(stderr, "cannot allocate memory for column counts");
-      exit(2);
-    }
+       data.values = (xmlChar **) calloc(numColNames, sizeof(xmlChar *));
+       if(!data.values) {
+         fprintf(stderr, "cannot allocate memory for column values");
+         exit(1);
+       }
+       data.colCounts = (long*) calloc(numColNames, sizeof(long));
+       if(!data.colCounts) {
+	   fprintf(stderr, "cannot allocate memory for column counts");
+	   exit(2);
+       }
     }
 
     ctx = xmlCreateFileParserCtxt(infileName);
@@ -275,6 +318,9 @@ main(int argc, char **argv)
   int i;
   int offset = 0;
   int noout = 0;
+  ParserData parserData;
+  parserData.separator = strdup("\t");
+  parserData.Trim = 0;
 
   if(argc == 1) {
       showHelp();
@@ -289,15 +335,24 @@ main(int argc, char **argv)
 	   exit(1);
        } else if(strcmp(argv[i], "--trim") == 0) {
    	  fprintf(stderr, "enabling trimming\n");
-	  Trim = 1;
+	  parserData.Trim = 1;
        } else if(strcmp(argv[i], "--noout") == 0) {
 	  noout = 1;
+       } else if(strcmp(argv[i], "--num") == 0 && argc > i+1) {
+	   parserData.maxEntries = atol(argv[i+1]);
+	   i++;
+	   offset ++;
+       } else if(strcmp(argv[i], "--sep") == 0 && argc > i+1) {
+	   parserData.separator = strdup(argv[i+1]);
+	   i++;
+	   offset ++;
        }
+
     } else 
       break;
   }
 
-  return( parse_xml_file(argv[offset+1], noout ? NULL : argv[offset + 2], argv + (offset + 3 - noout), argc - (3 + offset - noout) ));
+  return( parse_xml_file(argv[offset+1], noout ? NULL : argv[offset + 2], argv + (offset + 3 - noout), argc - (3 + offset - noout), parserData ));
     
 }
 
