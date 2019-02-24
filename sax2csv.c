@@ -22,6 +22,7 @@ typedef struct {
     int Trim;
 
     int repIdTags;
+    int noHeader;
 } ParserData;
 
 //int Trim = 0;
@@ -151,7 +152,7 @@ void
 startDoc(void *ctx)    
 {
     ParserData *data = (ParserData*) ctx;
-    if(!data->out)
+    if(!data->out || data->noHeader)
       return;
 
     int i;
@@ -350,6 +351,7 @@ main(int argc, char **argv)
   parserData.Trim = 0;
   parserData.repIdTags = 0;
   parserData.maxEntries = -1;
+  parserData.noHeader = 0;
 
   if(argc == 1) {
       showHelp();
@@ -369,6 +371,8 @@ main(int argc, char **argv)
 	  noout = 1;
        } else if(strcmp(argv[i], "--tags") == 0) {
 	  parserData.repIdTags = 1;
+       } else if(strcmp(argv[i], "--noheader") == 0) {
+	  parserData.noHeader = 1;
        } else if(strcmp(argv[i], "--num") == 0 && argc > i+1) {
 	   parserData.maxEntries = atol(argv[i+1]);
 	   i++;
