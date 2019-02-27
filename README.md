@@ -42,3 +42,23 @@ or write the column names to a file and then cat these on the commmand line (in 
 sax2csv Badges.xml  2> COL_NAMES 
 sax2csv Badges.xml output `cat COL_NAMES`
 ```
+
+
+
+
+
+
+## postsForTag
+
+Using the Stats site from stackexchange, we can find the posts that have r as a tag with
+```
+./postsForTag --tag r --noheader  ~/Data/stackexchange/Stats/Posts.xml r.csv Id Tags PostTypeId ParentId AcceptedAnswerId Body
+```
+
++ We specify the tag of interest with --tag.
++ --noheader removes the column names, e.g., for use with a database that doesn't want them
++ Name of the XML Posts file 
++ name of the output TSV (tab-separated values) file
++ the names of the tags we want from each row.  The list above is just for testing.
+
+
