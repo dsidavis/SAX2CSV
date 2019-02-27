@@ -6,6 +6,11 @@ sax2csv: sax2csv.o
 	$(CC) -o $@ $^ $(LIBS)
 
 
+postsForTag: postsForTag.o
+	$(CC) -g -o $@ $^ $(LIBS)
+
+
+
 Badges.csv: sax2csv
 	./sax2csv Badges.xml Badges.csv  Id UserId Name Date
 
