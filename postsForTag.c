@@ -457,7 +457,7 @@ main(int argc, char **argv)
   parserData.repIdTags = 0;
   parserData.maxEntries = -1;
   parserData.noHeader = 0;
-  parserData.maxNumPosts = 45e6;
+  parserData.maxNumPosts = 54e6;
 
   if(argc == 1) {
       showHelp();
