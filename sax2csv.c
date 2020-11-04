@@ -346,6 +346,7 @@ main(int argc, char **argv)
   int i;
   int offset = 0;
   int noout = 0;
+  int status = 0;
   ParserData parserData;
   parserData.separator = strdup("\t");
   parserData.Trim = 0;
@@ -387,7 +388,9 @@ main(int argc, char **argv)
       break;
   }
 
-  return( parse_xml_file(argv[offset+1], noout ? NULL : argv[offset + 2], argv + (offset + 3 - noout), argc - (3 + offset - noout), parserData ));
+  status = parse_xml_file(argv[offset+1], noout ? NULL : argv[offset + 2], argv + (offset + 3 - noout), argc - (3 + offset - noout), parserData );
+
+  return((offset + 3 - noout) > 0 ? 0 : status);
     
 }
 
