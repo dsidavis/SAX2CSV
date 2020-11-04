@@ -23,6 +23,8 @@ typedef struct {
 
     int repIdTags;
     int noHeader;
+
+    int addQuotes;
 } ParserData;
 
 //int Trim = 0;
@@ -81,10 +83,11 @@ showNewCols(ParserData *data, int showBanner)
 }
 
 void
-writeChars(FILE *out, char *str)
+writeChars(FILE *out, char *str, int addQuotes)
 {
     char *p = str;
-    fputc('"', out);
+    if(addQuotes)
+	fputc('"', out);
     while(*p) {
 	if(*p == '\r' && p[1] && p[1] == '\n')
 	    p++;
@@ -96,7 +99,8 @@ writeChars(FILE *out, char *str)
 	    fprintf(out, "    ");//XXX tab to 4 spaces! so can use tab separator.
 	    break;
 	case '"':
-	    fprintf(out, "\"");
+	    if(addQuotes) //XXX
+		fprintf(out, "\"");
 	    break;
 	default: 
 	    fputc(*p, out);
@@ -104,7 +108,8 @@ writeChars(FILE *out, char *str)
 	}
 	    p++;
     }
-    fputc('"', out);
+    if(addQuotes)
+	fputc('"', out);
 }
 
 int
@@ -138,7 +143,7 @@ writeValues(ParserData *data)
       if(data->values[i]) {
 	if(data->Trim)
 	  trim(data->values[i]);
-        writeChars(data->out, data->values[i]);
+        writeChars(data->out, data->values[i], data->addQuotes);
 	// fprintf(data->out, "%s", data->values[i]);	
 	data->values[i] = NULL;
       }
@@ -372,6 +377,8 @@ main(int argc, char **argv)
 	  noout = 1;
        } else if(strcmp(argv[i], "--tags") == 0) {
 	  parserData.repIdTags = 1;
+       } else if(strcmp(argv[i], "--quotes") == 0) {
+	   parserData.addQuotes = (parserData.addQuotes ? 0 : 1);
        } else if(strcmp(argv[i], "--noheader") == 0) {
 	  parserData.noHeader = 1;
        } else if(strcmp(argv[i], "--num") == 0 && argc > i+1) {
