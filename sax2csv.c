@@ -91,7 +91,8 @@ writeChars(FILE *out, char *str, int addQuotes)
     while(*p) {
 	if(*p == '\r' && p[1] && p[1] == '\n')
 	    p++;
-	switch( *p) {
+	switch(*p) {
+	case 13:
 	case '\n':
 	    fprintf(out, "\\\\n");
 	    break;
