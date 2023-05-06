@@ -101,7 +101,7 @@ writeChars(FILE *out, char *str, int addQuotes)
 	    break;
 	case '"':
 	    if(addQuotes) //XXX
-		fprintf(out, "\"");
+		fprintf(out, "\"\"");
 	    break;
 	default: 
 	    fputc(*p, out);
@@ -359,6 +359,7 @@ main(int argc, char **argv)
   parserData.repIdTags = 0;
   parserData.maxEntries = -1;
   parserData.noHeader = 0;
+  parserData.addQuotes = 1;  
 
   if(argc == 1) {
       showHelp();
@@ -379,6 +380,7 @@ main(int argc, char **argv)
        } else if(strcmp(argv[i], "--tags") == 0) {
 	  parserData.repIdTags = 1;
        } else if(strcmp(argv[i], "--quotes") == 0) {
+	   // toggle addQuotes
 	   parserData.addQuotes = (parserData.addQuotes ? 0 : 1);
        } else if(strcmp(argv[i], "--noheader") == 0) {
 	  parserData.noHeader = 1;
