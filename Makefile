@@ -10,6 +10,8 @@ postsForTag: postsForTag.o
 	$(CC) -g -o $@ $^ $(LIBS)
 
 
+clean:
+	-rm sax2csv postsForTag
 
 Badges.csv: sax2csv
 	./sax2csv Badges.xml Badges.csv  Id UserId Name Date
